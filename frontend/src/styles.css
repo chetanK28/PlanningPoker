@@ -1,0 +1,39 @@
+.user-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 10px;
+  }
+  
+  .user-card {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    background: linear-gradient(135deg, #2d3748, #4a5568);
+    color: white;
+    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  }
+  
+  .user-card:hover {
+    transform: scale(1.1);
+    box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.5);
+  }
+  
+  .vote-text {
+    font-size: 12px;
+    font-weight: medium;
+    color: #90cdf4;
+  }
+  
+  .hidden-vote {
+    color: gray;
+  }  
