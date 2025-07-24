@@ -45,16 +45,5 @@ npm start
 #### **4. Open in Browser**
 Go to: [`http://localhost:3000`](http://localhost:3000)  
 
----
-
-### **Contributions**  
-💡 PRs are welcome! Feel free to contribute by adding features or improving the UI.  
-
----
-
-### **License**  
-📜 MIT License - Free to use and modify.
-
----
 "# planningpoker" 
 "# Poker-Application" 
