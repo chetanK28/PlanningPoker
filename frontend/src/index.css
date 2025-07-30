@@ -1,8 +1,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* 🌟 Custom Global Styles for Planning-Poker */
 body {
   @apply bg-gray-900 text-white font-sans;
 }

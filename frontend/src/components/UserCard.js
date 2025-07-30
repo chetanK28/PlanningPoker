@@ -6,14 +6,35 @@ const colors = ["bg-red-500", "bg-blue-500", "bg-green-500", "bg-yellow-500", "b
 const UserCard = ({ username, vote, revealed, index }) => {
   return (
     <motion.div
-      className={`w-24 h-24 rounded-full flex flex-col items-center justify-center text-white shadow-xl ${colors[index % colors.length]} transform perspective-800`}
+      className={`w-24 h-24 rounded-full relative text-white shadow-xl ${colors[index % colors.length]}`}
       animate={{ rotateY: revealed ? 180 : 0 }}
       transition={{ duration: 0.6 }}
-      style={{ transformStyle: "preserve-3d" }}
+      style={{
+        transformStyle: "preserve-3d",
+        perspective: 800,
+      }}
     >
-      <div className="font-semibold text-sm">{username}</div>
-      <div className="text-xl font-bold mt-1">
-        {revealed ? vote : "🃏"}
+      {/* Front Face */}
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center font-semibold text-sm"
+        style={{
+          backfaceVisibility: "hidden",
+        }}
+      >
+        <div>{username}</div>
+        <div className="text-xl font-bold mt-1">🃏</div>
+      </div>
+
+      {/* Back Face */}
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center font-semibold text-sm"
+        style={{
+          transform: "rotateY(180deg)",
+          backfaceVisibility: "hidden",
+        }}
+      >
+        <div>{username}</div>
+        <div className="text-xl font-bold mt-1">{vote}</div>
       </div>
     </motion.div>
   );
