@@ -1,8 +1,8 @@
 {
   "name": "planning-poker-frontend",
   "version": "1.0.0",
-  "description": "Planning-Poker UI by Lavkesh Dwivedi",
-  "author": "Lavkesh Dwivedi",
+  "description": "Planning-Poker",
+  "author": "",
   "main": "src/index.js",
   "scripts": {
     "start": "react-scripts start",

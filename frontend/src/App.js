@@ -5,7 +5,31 @@ import VoteButtons from "./components/VoteButtons";
 import UserCircle from "./components/UserCircle";
 import TitleDescription from "./components/TitleDescription";
  
-const socket = io("http://10.77.161.113:3001");
+const DEFAULT_PORT = 3001;
+const isStandardPort = (p) => p === "" || p === "80" || p === "443";
+const pageProtocol = window.location.protocol;
+const pageHost = window.location.hostname;
+ 
+const envSocket =
+  typeof import.meta !== "undefined" && import.meta.env?.VITE_SOCKET_URL;
+const SOCKET_URL =
+  envSocket ||
+  (!isStandardPort(window.location.port)
+    ? `${pageProtocol}//${pageHost}:${DEFAULT_PORT}`
+    : `${pageProtocol}//${window.location.host}`);
+ 
+const socket = io(SOCKET_URL, {
+  transports: ["websocket", "polling"],
+  reconnectionAttempts: 15,
+  reconnectionDelay: 500,
+});
+ 
+socket.on("connect", () => {
+  console.log("[socket] connected:", socket.id, "→", SOCKET_URL);
+});
+socket.on("connect_error", (err) => {
+  console.error("[socket] connect_error:", err?.message, err);
+});
  
 const copyToClipboard = (text) => {
   if (navigator.clipboard?.writeText) {
@@ -23,9 +47,13 @@ const copyToClipboard = (text) => {
 const App = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [roomId, setRoomId] = useState(searchParams.get("room") || "");
-  const [roomName, setRoomName] = useState(localStorage.getItem("roomName") || "");
+  const [roomName, setRoomName] = useState(
+    localStorage.getItem("roomName") || ""
+  );
   const [username, setUsername] = useState("");
-  const [inputUsername, setInputUsername] = useState(localStorage.getItem("username") || "");
+  const [inputUsername, setInputUsername] = useState(
+    localStorage.getItem("username") || ""
+  );
   const [role, setRole] = useState(localStorage.getItem("role") || "");
   const [joined, setJoined] = useState(false);
   const [users, setUsers] = useState([]);
@@ -47,40 +75,49 @@ const App = () => {
   }, [roomId, username, role]);
  
   useEffect(() => {
-    socket.on("room-update", (data) => setUsers(Object.values(data.users)));
-    socket.on("vote-update", (data) => setVotes(data));
-    socket.on("reveal", (data) => {
+    const onRoomUpdate = (data) => setUsers(Object.values(data.users));
+    const onVoteUpdate = (data) => setVotes(data);
+    const onReveal = (data) => {
       setVotes(data);
       setRevealed(true);
       calculateAverage(data);
-    });
-    socket.on("reset", () => {
+    };
+    const onReset = () => {
       setVotes({});
       setRevealed(false);
       setAverage(null);
       setSelectedVote(null);
-    });
-    socket.on("title-description-updated", ({ title, description }) => {
+    };
+    const onTitleDesc = ({ title, description }) => {
       setTitle(title);
       setDescription(description);
-    });
-    socket.on("notification", (msg) => {
+    };
+    const onNotification = (msg) => {
       setNotification(msg);
       setTimeout(() => setNotification(""), 4000);
-    });
+    };
+ 
+    socket.on("room-update", onRoomUpdate);
+    socket.on("vote-update", onVoteUpdate);
+    socket.on("reveal", onReveal);
+    socket.on("reset", onReset);
+    socket.on("title-description-updated", onTitleDesc);
+    socket.on("notification", onNotification);
  
     return () => {
-      socket.off("room-update");
-      socket.off("vote-update");
-      socket.off("reveal");
-      socket.off("reset");
-      socket.off("title-description-updated");
-      socket.off("notification");
+      socket.off("room-update", onRoomUpdate);
+      socket.off("vote-update", onVoteUpdate);
+      socket.off("reveal", onReveal);
+      socket.off("reset", onReset);
+      socket.off("title-description-updated", onTitleDesc);
+      socket.off("notification", onNotification);
     };
   }, []);
  
   const calculateAverage = (votes) => {
-    const numericVotes = Object.values(votes).filter((v) => !isNaN(v)).map(Number);
+    const numericVotes = Object.values(votes)
+      .filter((v) => !isNaN(v))
+      .map(Number);
     if (numericVotes.length > 0) {
       const avg = numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length;
       setAverage(avg.toFixed(2));
@@ -96,19 +133,22 @@ const App = () => {
       room: roomId,
       title: newTitle,
       description: newDesc,
-      username
+      username,
     });
   };
  
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-100 to-pink-100 text-gray-800 p-6">
+      {/* Header */}
       <div className="flex justify-between items-center px-6 py-4 border-b border-gray-300 bg-white shadow rounded-lg">
         <Link to="/" className="font-extrabold text-xl text-blue-700">
           Planning Poker Game
         </Link>
  
         <div className="flex items-center space-x-4">
-          <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">{username}</div>
+          <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
+            {username}
+          </div>
           <button
             onClick={() => {
               copyToClipboard(window.location.href);
@@ -125,16 +165,22 @@ const App = () => {
           >
             Title & Desc
           </button>
-          {copied && <span className="text-green-600 font-semibold animate-pulse">✅ Link Copied!</span>}
+          {copied && (
+            <span className="text-green-600 font-semibold animate-pulse">
+              ✅ Link Copied!
+            </span>
+          )}
         </div>
       </div>
  
+      {/* Notifications */}
       {notification && (
         <div className="text-center mt-4 text-sm text-white bg-blue-500 py-2 px-4 rounded shadow">
           {notification}
         </div>
       )}
  
+      {/* Sidebar */}
       {showSidebar && (
         <div className="fixed top-0 right-0 w-96 h-full bg-white shadow-lg p-4 z-50 overflow-auto">
           <div className="flex justify-between items-center mb-4">
@@ -155,6 +201,7 @@ const App = () => {
         </div>
       )}
  
+      {/* Join/Create Room */}
       {!joined && !roomId ? (
         <div className="max-w-md mx-auto mt-16 space-y-6 bg-white shadow-lg rounded-lg p-6">
           <input
@@ -172,7 +219,9 @@ const App = () => {
           <button
             className="mt-4 w-full p-3 bg-green-500 text-white rounded hover:bg-green-600"
             onClick={() => {
-              const newRoomId = `room-${Math.random().toString(36).substr(2, 8)}`;
+              const newRoomId = `room-${Math.random()
+                .toString(36)
+                .substr(2, 8)}`;
               setRoomId(newRoomId);
               setSearchParams({ room: newRoomId });
               setRole("scrumMaster");
@@ -181,7 +230,11 @@ const App = () => {
               localStorage.setItem("role", "scrumMaster");
               localStorage.setItem("username", inputUsername);
               localStorage.setItem("roomName", roomName);
-              socket.emit("join-room", { room: newRoomId, username: inputUsername, role: "scrumMaster" });
+              socket.emit("join-room", {
+                room: newRoomId,
+                username: inputUsername,
+                role: "scrumMaster",
+              });
             }}
           >
             Create New Room
@@ -203,7 +256,11 @@ const App = () => {
               setJoined(true);
               localStorage.setItem("username", inputUsername);
               localStorage.setItem("role", "Participant");
-              socket.emit("join-room", { room: roomId, username: inputUsername, role: "Participant" });
+              socket.emit("join-room", {
+                room: roomId,
+                username: inputUsername,
+                role: "Participant",
+              });
             }}
             disabled={!inputUsername}
           >
@@ -211,9 +268,10 @@ const App = () => {
           </button>
         </div>
       ) : (
-        <div className="flex flex-col items-center mt-10">
-          <div className="relative w-[400px] h-[400px] border-4 border-gray-300 rounded-full flex items-center justify-center bg-white shadow-lg">
-            <div class="absolute w-32 h-32 bg-white-200 rounded-full flex items-center justify-center font-bold text-xl text-white-600">
+        /* Game screen */
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-150px)]">
+          <div className="relative w-[400px] h-[400px] max-w-[90vw] max-h-[90vw] border-4 border-gray-300 rounded-full flex items-center justify-center bg-white shadow-lg">
+            <div className="absolute w-32 h-32 bg-white-200 rounded-full flex items-center justify-center font-bold text-xl text-white-600">
               Table
             </div>
             <UserCircle users={users} votes={votes} revealed={revealed} />
@@ -238,13 +296,7 @@ const App = () => {
               <div className="flex flex-col items-center mt-6 space-y-4">
                 <button
                   className="p-3 bg-green-700 text-black font-bold rounded hover:bg-green-800"
-                  onClick={() => {
-                    if (Object.keys(votes).length === users.length) {
-                      socket.emit("reveal-votes", roomId);
-                    } else {
-                      alert("All users must vote before revealing.");
-                    }
-                  }}
+                  onClick={() => socket.emit("reveal-votes", roomId)}
                 >
                   Reveal Votes
                 </button>
@@ -264,5 +316,3 @@ const App = () => {
 };
  
 export default App;
- 
- 

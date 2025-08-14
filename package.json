@@ -1,0 +1,26 @@
+{
+  "name": "planningpoker-main",
+  "version": "1.0.0",
+  "description": "🚀 A real-time **Planning Poker** application for agile teams, built with **Node.js, Express, Socket.io, React, and Tailwind CSS**.",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "cd backend && node server.js",
+    "frontend": "cd frontend && npm start",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chetanK28/Poker-Application.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chetanK28/Poker-Application/issues"
+  },
+  "homepage": "https://github.com/chetanK28/Poker-Application#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}
